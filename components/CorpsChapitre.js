@@ -34,6 +34,30 @@ const STYLES_TITRE = {
 // sans jamais dépendre des espaces tapés à la main par l'auteur.
 // Une ligne de dialogue (qui commence par un tiret) démarre toujours un nouveau paragraphe,
 // même si l'auteur a oublié de laisser une ligne vide devant.
+// Longueur à partir de laquelle une citation entre guillemets noyée au milieu d'un paragraphe
+// plus long mérite d'être sortie sur son propre bloc (même traitement visuel qu'une citation
+// autonome) plutôt que de rester en italique inline, à peine visible dans la masse du texte —
+// une courte incise (« pour Lui », « rester à ta place ») reste inline, une citation qui
+// développe une vraie idée gagne sa propre respiration typographique.
+const SEUIL_CITATION_INCRUSTEE = 45
+
+// Repère UNE citation assez longue dans le texte et la sépare en 3 : ce qui précède, la
+// citation elle-même (poussée comme bloc §CITATION§), ce qui suit — poussés séparément dans
+// `paragraphes` plutôt que de laisser la citation fondue dans un paragraphe dense.
+function emettreParagraphe(texte, paragraphes) {
+  const regex = new RegExp(`«([^»]{${SEUIL_CITATION_INCRUSTEE},}?)»`)
+  const correspondance = texte.match(regex)
+  if (!correspondance) {
+    if (texte.trim()) paragraphes.push(texte)
+    return
+  }
+  const avant = texte.slice(0, correspondance.index).trim()
+  const apres = texte.slice(correspondance.index + correspondance[0].length).trim()
+  if (avant) paragraphes.push(avant)
+  paragraphes.push('§CITATION§' + correspondance[0])
+  if (apres) emettreParagraphe(apres, paragraphes) // au cas (rare) où une 2e citation suivrait
+}
+
 export function decouperEnParagraphes(texte) {
   const blocs = (texte || '').split(/\n\s*\n/)
   const paragraphes = []
@@ -67,17 +91,17 @@ export function decouperEnParagraphes(texte) {
       const estDialogue = /^[—–-]\s/.test(ligne)
       const estSeparateur = /^(---+|\*\*\*+|___+)$/.test(ligne)
       if (estSeparateur) {
-        if (courant) { paragraphes.push(courant); courant = '' }
+        if (courant) { emettreParagraphe(courant, paragraphes); courant = '' }
         paragraphes.push('§SEPARATEUR§')
       } else if (estDialogue) {
-        if (courant) paragraphes.push(courant)
+        if (courant) emettreParagraphe(courant, paragraphes)
         paragraphes.push(ligne)
         courant = ''
       } else {
         courant = courant ? `${courant} ${ligne}` : ligne
       }
     }
-    if (courant) paragraphes.push(courant)
+    if (courant) emettreParagraphe(courant, paragraphes)
   }
 
   return paragraphes
