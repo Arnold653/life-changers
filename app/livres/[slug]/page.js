@@ -1,0 +1,155 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import BadgeTransparence from '@/components/BadgeTransparence'
+import LecteurPDF from '@/components/LecteurPDF'
+import BoutonDeblocage from '@/components/BoutonDeblocage'
+import BoutonPourboire from '@/components/BoutonPourboire'
+import CachePourHorsLigne from '@/components/CachePourHorsLigne'
+import BarreRetourAdmin from '@/components/BarreRetourAdmin'
+import PartagerLecture from '@/components/PartagerLecture'
+import SelectionPartage from '@/components/SelectionPartage'
+import BoutonFavori from '@/components/BoutonFavori'
+import AvisSection from '@/components/AvisSection'
+import BoutonTelecharger from '@/components/BoutonTelecharger'
+import { urlSigneeLecture } from '@/lib/fichiersLivres'
+
+export default async function LivreDetailPage({ params, searchParams }) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect(`/login?suite=/livres/${params.slug}`)
+  }
+
+  const { data: livre } = await supabase.from('livres').select('*').eq('slug', params.slug).single()
+  const estAdmin = user.email === process.env.ADMIN_EMAIL
+
+  if (!livre || (livre.statut !== 'publie' && !estAdmin)) {
+    return <div className="px-6 py-24 text-center text-papier/50 font-mono text-sm">Livre introuvable.</div>
+  }
+
+  // Mode 'payant' : le livre entier est verrouillé tant qu'il n'est pas débloqué (l'admin voit toujours tout).
+  let verrouille = false
+  // Mode 'bonus' : le livre reste gratuit, seul le contenu bonus est verrouillé.
+  let bonusDebloque = false
+
+  if (!estAdmin && (livre.mode_monetisation === 'payant' || livre.mode_monetisation === 'bonus')) {
+    const { data: deblocage } = await supabase
+      .from('deblocages')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('livre_id', livre.id)
+      .eq('statut', 'reussi')
+      .eq('type', 'deblocage')
+      .maybeSingle()
+
+    if (livre.mode_monetisation === 'payant') verrouille = !deblocage
+    if (livre.mode_monetisation === 'bonus') bonusDebloque = !!deblocage
+  }
+  if (estAdmin && livre.mode_monetisation === 'bonus') bonusDebloque = true
+
+  // Téléchargement PDF : jamais pour un livre 100% gratuit — réservé à ceux qui ont vraiment
+  // payé (payant), donné un pourboire (pourboire), ou débloqué le bonus (bonus). L'admin peut
+  // toujours télécharger, pour vérifier le rendu final.
+  let telechargementAutorise = estAdmin
+  if (!estAdmin) {
+    if (livre.mode_monetisation === 'payant') telechargementAutorise = !verrouille
+    else if (livre.mode_monetisation === 'bonus') telechargementAutorise = bonusDebloque
+    else if (livre.mode_monetisation === 'pourboire') {
+      const { data: pourboire } = await supabase
+        .from('deblocages')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('livre_id', livre.id)
+        .eq('statut', 'reussi')
+        .eq('type', 'pourboire')
+        .maybeSingle()
+      telechargementAutorise = !!pourboire
+    }
+  }
+
+  let sectionInitiale = 0
+  let urlLecture = null
+  if (!verrouille) {
+    const { data: progression } = await supabase
+      .from('lecture_progress_livres')
+      .select('derniere_section')
+      .eq('user_id', user.id)
+      .eq('livre_id', livre.id)
+      .maybeSingle()
+    sectionInitiale = progression?.derniere_section || 0
+    urlLecture = await urlSigneeLecture(createAdminClient(), livre.fichier_url)
+  }
+
+  return (
+    <div className="px-6 pt-16 pb-24 max-w-2xl mx-auto lever">
+      {estAdmin && searchParams?.admin && <BarreRetourAdmin href="/admin/livres" />}
+      <CachePourHorsLigne />
+      {livre.statut !== 'publie' && (
+        <p className="font-mono text-[0.65rem] uppercase tracking-widest text-grenat border border-grenat/40 rounded-full px-2.5 py-1 inline-block mb-4">
+          Brouillon — visible pour toi seul
+        </p>
+      )}
+      {livre.genre && (
+        <span className="font-mono text-[0.65rem] uppercase tracking-widest text-or border border-or/30 rounded-full px-2.5 py-1">
+          {livre.genre}
+        </span>
+      )}
+      <h1 className="font-display text-4xl md:text-5xl text-papier mt-4 mb-2 leading-tight">{livre.titre}</h1>
+      {livre.sous_titre && (
+        <p className="font-display italic text-papier/55 text-lg md:text-xl mb-3 leading-snug">{livre.sous_titre}</p>
+      )}
+      {livre.auteur && <p className="text-papier/40 font-mono text-sm mb-4">{livre.auteur}</p>}
+
+      {livre.description && <p className="text-papier/60 leading-relaxed mb-6">{livre.description}</p>}
+
+      <div className="mb-8">
+        <BadgeTransparence generePar={livre.genere_par_ia} verifiePar={livre.verifie_par} />
+      </div>
+
+      <div className="mb-8 flex items-center gap-4">
+        <PartagerLecture type="livre" titre={livre.titre} genre={livre.genre} slug={livre.slug} couvertureUrl={livre.couverture_url} />
+        <BoutonFavori type="livre" id={livre.id} />
+      </div>
+
+      {verrouille ? (
+        <BoutonDeblocage livreId={livre.id} prixFcfa={livre.prix_fcfa} />
+      ) : (
+        <SelectionPartage type="livre" titre={livre.titre} slug={livre.slug} couvertureUrl={livre.couverture_url}>
+          {telechargementAutorise && (
+            <div className="mb-6">
+              <BoutonTelecharger slug={livre.slug} />
+            </div>
+          )}
+          <LecteurPDF
+            url={urlLecture}
+            slug={livre.slug}
+            livreId={livre.id}
+            contenuInitial={livre.contenu_extrait || null}
+            sectionInitiale={sectionInitiale}
+          />
+        </SelectionPartage>
+      )}
+
+      {!verrouille && livre.mode_monetisation === 'pourboire' && (
+        <BoutonPourboire livreId={livre.id} />
+      )}
+
+      {!verrouille && livre.mode_monetisation === 'bonus' && (
+        bonusDebloque ? (
+          livre.bonus_contenu ? (
+            <div className="border border-or/30 rounded-2xl p-8 my-10">
+              <p className="font-mono text-xs uppercase tracking-widest text-or mb-4">Bonus débloqué</p>
+              <p className="text-papier/80 leading-relaxed whitespace-pre-wrap">{livre.bonus_contenu}</p>
+            </div>
+          ) : null
+        ) : (
+          <BoutonDeblocage livreId={livre.id} prixFcfa={livre.prix_fcfa} libelle="le contenu bonus" />
+        )
+      )}
+
+      <AvisSection type="livre" id={livre.id} />
+    </div>
+  )
+}
