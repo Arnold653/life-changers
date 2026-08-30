@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import BadgeTransparence from '@/components/BadgeTransparence'
 import LecteurPDF from '@/components/LecteurPDF'
 import BoutonDeblocage from '@/components/BoutonDeblocage'
 import BoutonPourboire from '@/components/BoutonPourboire'
@@ -103,10 +102,6 @@ export default async function LivreDetailPage({ params, searchParams }) {
       {livre.auteur && <p className="text-papier/40 font-mono text-sm mb-4">{livre.auteur}</p>}
 
       {livre.description && <p className="text-papier/60 leading-relaxed mb-6">{livre.description}</p>}
-
-      <div className="mb-8">
-        <BadgeTransparence generePar={livre.genere_par_ia} verifiePar={livre.verifie_par} />
-      </div>
 
       <div className="mb-8 flex items-center gap-4">
         <PartagerLecture type="livre" titre={livre.titre} genre={livre.genre} slug={livre.slug} couvertureUrl={livre.couverture_url} />

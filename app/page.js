@@ -13,7 +13,7 @@ export default async function LivresPage() {
 
   const { data: livres } = await supabase
     .from('livres')
-    .select('id, titre, slug, auteur, genre, description, genere_par_ia, verifie_par, created_at, contenu_extrait, couverture_url')
+    .select('id, titre, slug, auteur, genre, description, created_at, contenu_extrait, couverture_url')
     .eq('statut', 'publie')
     .order('created_at', { ascending: false })
 
@@ -43,7 +43,7 @@ export default async function LivresPage() {
     const sectionActuelle = progressionParLivre[l.id]
     return {
       id: l.id, titre: l.titre, slug: l.slug, auteur: l.auteur, genre: l.genre, description: l.description,
-      genere_par_ia: l.genere_par_ia, verifie_par: l.verifie_par, couverture_url: l.couverture_url,
+      couverture_url: l.couverture_url,
       nbSections,
       nbLecteurs: lecteursParLivre[l.id]?.size || 0,
       nouveau: new Date(l.created_at).getTime() > septJours,

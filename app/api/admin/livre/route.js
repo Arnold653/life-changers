@@ -41,8 +41,6 @@ export async function POST(request) {
   const auteur = form.get('auteur')
   const description = form.get('description')
   const genre = form.get('genre')
-  const verifiePar = form.get('verifie_par')
-  const generePar = form.get('genere_par_ia') === 'true'
   const fichier = form.get('fichier')
   const fichierType = form.get('fichier_type') || 'pdf' // 'pdf' | 'md' | 'txt' | 'epub' | 'docx'
   const contenuExtraitBrut = form.get('contenu_extrait') // JSON déjà calculé côté admin
@@ -82,8 +80,6 @@ export async function POST(request) {
     titre, sous_titre: sousTitre || null, slug, auteur, description, genre,
     fichier_url: cheminFichier,
     fichier_type: fichierType,
-    genere_par_ia: generePar,
-    verifie_par: verifiePar || null,
     statut,
     contenu_extrait: contenuExtrait,
     contenu_extrait_le: contenuExtrait ? new Date().toISOString() : null,
@@ -128,7 +124,6 @@ export async function PATCH(request) {
       .from('livres')
       .update({
         titre: body.titre, sous_titre: body.sous_titre || null, auteur: body.auteur || null, description: body.description || null, genre: body.genre || null,
-        genere_par_ia: body.genere_par_ia ?? true, verifie_par: body.verifie_par || null,
       })
       .eq('id', body.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 400 })

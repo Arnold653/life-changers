@@ -42,7 +42,7 @@ export default function AdminLivresPage() {
   const [loading, setLoading] = useState(false)
   const [progression, setProgression] = useState(null)
   const [form, setForm] = useState({
-    titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '', verifie_par: '', genere_par_ia: true,
+    titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '',
   })
   const [fichier, setFichier] = useState(null)
   const [apercu, setApercu] = useState(null) // { contenu, sections } prêt à être envoyé
@@ -59,14 +59,14 @@ export default function AdminLivresPage() {
     setFichier(null)
     setForm({
       titre: livre.titre, sous_titre: livre.sous_titre || '', slug: livre.slug, auteur: livre.auteur || '', description: livre.description || '',
-      genre: livre.genre || '', verifie_par: livre.verifie_par || '', genere_par_ia: livre.genere_par_ia ?? true,
+      genre: livre.genre || '',
     })
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   function annulerEdition() {
     setEdition(null)
-    setForm({ titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '', verifie_par: '', genere_par_ia: true })
+    setForm({ titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '' })
     setMessage('')
   }
 
@@ -224,7 +224,7 @@ export default function AdminLivresPage() {
       setMessage(`Erreur : ${resultat.error}`)
     } else {
       setMessage(`${statutFinal === 'publie' ? 'Publié' : 'Enregistré en brouillon'} ✓ — /livres/${resultat.slug}`)
-      setForm({ titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '', verifie_par: '', genere_par_ia: true })
+      setForm({ titre: '', sous_titre: '', slug: '', auteur: '', description: '', genre: '' })
       setFichier(null)
       setApercu(null)
       charger()
@@ -280,8 +280,6 @@ export default function AdminLivresPage() {
         data.append('description', entete?.description || '')
         data.append('sous_titre', contenu.sousTitreDetecte || entete?.sousTitre || '')
         data.append('genre', entete?.genre || genreLot)
-        data.append('genere_par_ia', 'true')
-        data.append('verifie_par', '')
         data.append('fichier', fichier)
         data.append('fichier_type', type)
         data.append('contenu_extrait', JSON.stringify(contenu))
@@ -424,15 +422,6 @@ export default function AdminLivresPage() {
               ))}
             </div>
           )}
-        </div>
-
-        <div className="border-t border-ligne pt-5">
-          <p className="text-or text-xs font-mono uppercase tracking-widest mb-4">Transparence</p>
-          <label className="flex items-center gap-2 text-sm text-papier/70 mb-4">
-            <input type="checkbox" checked={form.genere_par_ia} onChange={(e) => update('genere_par_ia', e.target.checked)} />
-            Contenu généré avec l'aide de l'IA
-          </label>
-          {champ('Vérifié par (nom, optionnel)', 'verifie_par', 'text', false, [], 'noms-connus')}
         </div>
 
         {edition ? (
