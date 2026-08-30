@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 export default function SiteHeader() {
   const [tiroirOuvert, setTiroirOuvert] = useState(false)
@@ -37,6 +38,7 @@ export default function SiteHeader() {
   const liensNav = [
     { href: '/', label: 'Catalogue' },
     ...(connecte ? [{ href: '/bibliotheque', label: 'Ma bibliothèque' }] : []),
+    ...(connecte ? [{ href: '/compte', label: 'Mon compte' }] : []),
     ...(statut.isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
@@ -56,6 +58,7 @@ export default function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-1">
+            <ThemeToggle className="mr-1" />
             {connecte ? (
               <a href="/bibliotheque" className="hidden sm:block text-papier border border-papier/20 rounded-full px-4 py-1.5 hover:border-or hover:text-or transition-colors text-sm">
                 Ma bibliothèque
@@ -94,9 +97,10 @@ export default function SiteHeader() {
           </div>
 
           {connecte && (
-            <div className="px-5 py-5 border-b border-ligne">
+            <a href="/compte" onClick={() => setTiroirOuvert(false)} className="block px-5 py-5 border-b border-ligne hover:bg-encre/40 transition-colors">
               <p className="font-display text-lg text-papier truncate">{statut.user?.email}</p>
-            </div>
+              <p className="text-papier/40 text-xs font-mono uppercase tracking-wide mt-1">Voir mon compte</p>
+            </a>
           )}
 
           <nav className="flex-1 overflow-y-auto py-3">

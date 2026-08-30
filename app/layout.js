@@ -17,6 +17,13 @@ export const viewport = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="font-body min-h-screen flex flex-col">
         <ServiceWorkerRegister />
         <BandeauHorsLigne />

@@ -1,49 +1,67 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Spectral:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ----------------------------------------------------------------------------
+   Système de couleurs — variables CSS (triplets RGB, pour supporter les
+   opacités Tailwind du type bg-encre/40). Clair par défaut, sombre en option
+   via [data-theme="dark"] sur <html> (voir components/ThemeToggle.js).
+   ---------------------------------------------------------------------------- */
+:root {
+  --encre: 250 249 246;        /* fond principal (clair) */
+  --encre-claire: 255 255 255; /* cartes / surfaces surélevées */
+  --papier: 11 21 38;          /* texte principal — bleu marine Life Changers */
+  --or: 247 168 28;            /* accent — orange Life Changers, utilisé avec retenue */
+  --grenat: 178 58 46;         /* accent secondaire — erreurs uniquement */
+  --ligne: 11 21 38;           /* séparateurs (utilisé en rgb(var(--ligne) / 0.1)) */
+  --ligne-alpha: 0.1;
+  --grain-alpha: 0.035;
+}
+
+[data-theme='dark'] {
+  --encre: 9 14 25;
+  --encre-claire: 18 28 46;
+  --papier: 240 241 238;
+  --or: 247 168 28;
+  --grenat: 224 96 79;
+  --ligne: 240 241 238;
+  --ligne-alpha: 0.09;
+  --grain-alpha: 0.03;
+}
 
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  background-color: #0d0f12;
-  background-image: radial-gradient(circle at 1px 1px, rgba(233,234,234,0.035) 1px, transparent 0);
+  background-color: rgb(var(--encre));
+  background-image: radial-gradient(circle at 1px 1px, rgb(var(--papier) / var(--grain-alpha)) 1px, transparent 0);
   background-size: 22px 22px;
-  color: #e9eaea;
+  color: rgb(var(--papier));
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 ::selection {
-  background: #0079db;
-  color: #0d0f12;
+  background: rgb(var(--or));
+  color: rgb(var(--encre));
 }
 
-/* Lettrine — première lettre d'un chapitre, style manuscrit enluminé */
+/* Lettrine — première lettre d'un chapitre */
 .lettrine::first-letter {
-  font-family: 'Fraunces', serif;
-  font-size: 4.2rem;
-  font-weight: 600;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 4rem;
+  font-weight: 700;
   float: left;
   line-height: 0.82;
-  padding-right: 0.09em;
-  padding-top: 0.06em;
-  color: #0079db;
+  padding-right: 0.1em;
+  padding-top: 0.08em;
+  color: rgb(var(--or));
 }
 
-/* Ligne dorée fine, utilisée comme séparateur signature */
+/* Ligne d'accent fine, utilisée comme séparateur signature */
 .filet-or {
-  height: 1px;
-  background: linear-gradient(90deg, #0079db 0%, transparent 70%);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .lever {
-    animation: lever 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  @keyframes lever {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--or)) 0%, transparent 70%);
 }

@@ -91,10 +91,15 @@ export default function CatalogueLivres({ livres }) {
 
   return (
     <div className="px-6 pt-16 pb-24 max-w-6xl mx-auto">
-      <div className="lever max-w-2xl mb-10">
-        <h1 className="font-display text-4xl md:text-5xl text-papier mb-4 leading-tight">Livres</h1>
-        <p className="text-papier/50 leading-relaxed">
-          Des ouvrages complets, à lire ou écouter en entier — à la différence des romans publiés chapitre par chapitre.
+      <div className="lever max-w-2xl mb-12">
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
+          <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
+        </p>
+        <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-papier mb-5 leading-[1.05] tracking-tight">
+          Des livres qui changent des vies.
+        </h1>
+        <p className="text-papier/60 leading-relaxed text-lg">
+          Des ouvrages complets, écrits sans détour, à lire en ligne ou hors connexion.
         </p>
       </div>
 
