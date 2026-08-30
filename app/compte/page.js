@@ -7,7 +7,7 @@ export default async function CompteePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login?suite=/compte')
 
-  const { data: profil } = await supabase.from('profiles').select('pseudo').eq('id', user.id).single()
+  const { data: profil } = await supabase.from('profiles').select('pseudo, bio, avatar_url').eq('id', user.id).single()
 
   const [{ count: nbAchats }, { count: nbFavoris }] = await Promise.all([
     supabase.from('deblocages').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('statut', 'reussi').eq('type', 'deblocage'),
@@ -30,7 +30,7 @@ export default async function CompteePage() {
         </div>
       </div>
 
-      <FormulaireCompte pseudoInitial={profil?.pseudo || ''} />
+      <FormulaireCompte pseudoInitial={profil?.pseudo || ''} bioInitiale={profil?.bio || ''} avatarUrlInitiale={profil?.avatar_url || ''} />
 
       <a href="/bibliotheque" className="block text-center border border-ligne rounded-full px-4 py-3 mt-4 text-papier/70 hover:border-or hover:text-or transition-colors">
         Voir ma bibliothèque

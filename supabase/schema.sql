@@ -9,6 +9,7 @@ create table profiles (
   id uuid references auth.users on delete cascade primary key,
   pseudo text unique not null,
   avatar_url text,
+  bio text,
   created_at timestamptz default now()
 );
 
@@ -124,6 +125,21 @@ on conflict (id) do nothing;
 create policy "Couvertures visibles par tous"
 on storage.objects for select
 using (bucket_id = 'couvertures');
+
+-- Bucket public pour les photos de profil.
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+create policy "Avatars visibles par tous"
+on storage.objects for select
+using (bucket_id = 'avatars');
+
+-- Chacun ne peut déposer/remplacer que SON PROPRE avatar (chemin "<user_id>/avatar.xxx").
+create policy "Lecteur gere son propre avatar"
+on storage.objects for all
+using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
+with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- Aucune policy de lecture publique sur le bucket 'livres' : seule la clé service_role
 -- (routes API, qui vérifient l'achat avant d'appeler storage) peut y accéder.

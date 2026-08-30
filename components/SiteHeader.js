@@ -97,10 +97,9 @@ export default function SiteHeader() {
           </div>
 
           {connecte && (
-            <a href="/compte" onClick={() => setTiroirOuvert(false)} className="block px-5 py-5 border-b border-ligne hover:bg-encre/40 transition-colors">
+            <div className="px-5 py-5 border-b border-ligne">
               <p className="font-display text-lg text-papier truncate">{statut.user?.email}</p>
-              <p className="text-papier/40 text-xs font-mono uppercase tracking-wide mt-1">Voir mon compte</p>
-            </a>
+            </div>
           )}
 
           <nav className="flex-1 overflow-y-auto py-3">

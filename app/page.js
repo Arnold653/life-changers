@@ -7,6 +7,10 @@ export default async function LivresPage() {
   const admin = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
+  const { data: profil } = user
+    ? await supabase.from('profiles').select('pseudo').eq('id', user.id).single()
+    : { data: null }
+
   const { data: livres } = await supabase
     .from('livres')
     .select('id, titre, slug, auteur, genre, description, genere_par_ia, verifie_par, created_at, contenu_extrait, couverture_url')
@@ -48,5 +52,5 @@ export default async function LivresPage() {
     }
   })
 
-  return <CatalogueLivres livres={enrichis} />
+  return <CatalogueLivres livres={enrichis} pseudo={profil?.pseudo || null} />
 }

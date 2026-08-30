@@ -16,32 +16,37 @@ function CarteLivre({ livre, vedette = false }) {
   return (
     <a href={`/livres/${livre.slug}`} className="group block">
       <div
-        className={`relative overflow-hidden rounded-md mb-4 shadow-[6px_6px_0_0_rgba(0,0,0,0.35)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgba(0,0,0,0.35)] ${
+        className={`relative overflow-hidden rounded-md mb-4 shadow-[6px_6px_0_0_rgb(var(--papier)/0.15)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgb(var(--papier)/0.15)] ${
           vedette ? 'aspect-[16/8.5] sm:aspect-[16/7]' : 'aspect-[3/4.2]'
         }`}
       >
+        {/* La couverture (réelle ou placeholder) reste toujours sombre par construction (voir
+            Couvertures.js) — le texte posé dessus est donc toujours blanc fixe, jamais lié au
+            thème clair/sombre du site : il resterait invisible sur une couverture sombre sinon. */}
         <CouvertureLivre titre={livre.titre} couvertureUrl={livre.couverture_url} />
-        <div className="absolute inset-0 p-5 flex flex-col justify-between">
-          <div className="flex items-center gap-2">
-            {livre.genre && (
-              <span className="font-mono text-[0.65rem] uppercase tracking-widest text-papier/80 border border-papier/30 rounded-full px-2.5 py-1 bg-black/10 backdrop-blur-sm">
-                {livre.genre}
-              </span>
-            )}
-            {livre.nouveau && (
-              <span className="font-mono text-[0.65rem] uppercase tracking-widest text-encre bg-or rounded-full px-2.5 py-1">
-                Nouveau
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="w-6 h-[1.5px] bg-or/70 mb-3" />
-            <h2 className={`font-display text-papier leading-tight drop-shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${vedette ? 'text-3xl md:text-4xl max-w-lg' : 'text-2xl'}`}>
+
+        <div className="absolute inset-0 p-4 flex items-start gap-2">
+          {livre.genre && (
+            <span className="font-mono text-[0.65rem] uppercase tracking-widest text-white border border-white/30 rounded-full px-2.5 py-1 bg-black/20 backdrop-blur-sm">
+              {livre.genre}
+            </span>
+          )}
+          {livre.nouveau && (
+            <span className="font-mono text-[0.65rem] uppercase tracking-widest text-encre bg-or rounded-full px-2.5 py-1">
+              Nouveau
+            </span>
+          )}
+        </div>
+
+        {vedette && (
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <div className="w-6 h-[1.5px] bg-or mb-3" />
+            <h2 className="font-display font-bold text-white leading-tight text-2xl md:text-4xl max-w-lg drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
               {livre.titre}
             </h2>
-            {livre.auteur && <p className="text-papier/60 text-xs mt-1 font-mono">{livre.auteur}</p>}
+            {livre.auteur && <p className="text-white/75 text-xs mt-1.5 font-mono">{livre.auteur}</p>}
           </div>
-        </div>
+        )}
 
         {livre.sectionEnCours && livre.nbSections > 0 && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-black/30">
@@ -49,6 +54,15 @@ function CarteLivre({ livre, vedette = false }) {
           </div>
         )}
       </div>
+
+      {/* Titre/auteur hors de la carte : lisibilité garantie quels que soient le thème et la
+          couverture (réelle photo, n'importe quelle couleur), pas de superposition risquée. */}
+      {!vedette && (
+        <>
+          <h2 className="font-display font-semibold text-papier leading-snug text-lg mb-0.5">{livre.titre}</h2>
+          {livre.auteur && <p className="text-papier/45 text-xs font-mono mb-2">{livre.auteur}</p>}
+        </>
+      )}
 
       <p className={`text-papier/45 leading-relaxed ${vedette ? 'text-base max-w-2xl mb-2' : 'text-sm line-clamp-2 mb-2'}`}>{livre.description}</p>
 
@@ -64,10 +78,17 @@ function CarteLivre({ livre, vedette = false }) {
   )
 }
 
-export default function CatalogueLivres({ livres }) {
+export default function CatalogueLivres({ livres, pseudo }) {
   const [recherche, setRecherche] = useState('')
   const [genreActif, setGenreActif] = useState(null)
   const [tri, setTri] = useState('recents') // 'recents' | 'lus' | 'encours'
+
+  const salutation = useMemo(() => {
+    if (!pseudo) return null
+    const heure = new Date().getHours()
+    const moment = heure < 5 ? 'Bonsoir' : heure < 12 ? 'Bonjour' : heure < 18 ? 'Bon après-midi' : 'Bonsoir'
+    return `${moment}, ${pseudo}.`
+  }, [pseudo])
 
   const genres = useMemo(
     () => [...new Set(livres.map((l) => l.genre).filter(Boolean))].sort(),
@@ -83,15 +104,19 @@ export default function CatalogueLivres({ livres }) {
     return liste
   }, [livres, recherche, genreActif, tri])
 
+  const enCours = livres.find((l) => l.sectionEnCours > 0) || null
   const vedette = !recherche && !genreActif && tri === 'recents'
-    ? [...livres].sort((a, b) => b.nbLecteurs - a.nbLecteurs)[0]
+    ? enCours || [...livres].sort((a, b) => b.nbLecteurs - a.nbLecteurs)[0]
     : null
-  const vedetteValide = vedette && vedette.nbLecteurs > 0 ? vedette : null
+  const vedetteValide = vedette && (enCours || vedette.nbLecteurs > 0) ? vedette : null
   const reste = vedetteValide ? filtres.filter((l) => l.id !== vedetteValide.id) : filtres
 
   return (
     <div className="px-6 pt-16 pb-24 max-w-6xl mx-auto">
       <div className="lever max-w-2xl mb-12">
+        {salutation && (
+          <p className="text-papier/50 font-mono text-sm mb-4">{salutation}</p>
+        )}
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
           <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
         </p>
@@ -152,7 +177,9 @@ export default function CatalogueLivres({ livres }) {
 
       {vedetteValide && (
         <div className="mb-14">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-4">Le plus lu</p>
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-4">
+            {enCours ? 'Reprendre la lecture' : 'Le plus lu'}
+          </p>
           <CarteLivre livre={vedetteValide} vedette />
         </div>
       )}
