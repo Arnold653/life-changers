@@ -4,6 +4,23 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from '@/components/ThemeToggle'
 
+function Avatar({ pseudo, avatarUrl, taille = 34 }) {
+  const initiale = (pseudo || '?').trim().charAt(0).toUpperCase()
+  return (
+    <div
+      className="rounded-full overflow-hidden bg-encre border border-ligne flex items-center justify-center shrink-0"
+      style={{ width: taille, height: taille }}
+    >
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <span className="font-display font-bold text-papier/40" style={{ fontSize: taille * 0.4 }}>{initiale}</span>
+      )}
+    </div>
+  )
+}
+
 export default function SiteHeader() {
   const [tiroirOuvert, setTiroirOuvert] = useState(false)
   const [statut, setStatut] = useState({ loading: true, user: null, isAdmin: false })
@@ -35,10 +52,11 @@ export default function SiteHeader() {
 
   const connecte = !statut.loading && !!statut.user
 
+  // Un seul type de contenu sur Life Changers (les livres) : "Accueil" fait à la fois office
+  // de page d'accueil et de catalogue complet, pas besoin d'une entrée séparée pour ça.
   const liensNav = [
-    { href: '/', label: 'Catalogue' },
+    { href: '/', label: 'Accueil' },
     ...(connecte ? [{ href: '/bibliotheque', label: 'Ma bibliothèque' }] : []),
-    ...(connecte ? [{ href: '/compte', label: 'Mon compte' }] : []),
     ...(statut.isAdmin ? [{ href: '/admin', label: 'Admin' }] : []),
   ]
 
@@ -57,14 +75,15 @@ export default function SiteHeader() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-1">
-            <ThemeToggle className="mr-1" />
-            {connecte ? (
-              <a href="/bibliotheque" className="hidden sm:block text-papier border border-papier/20 rounded-full px-4 py-1.5 hover:border-or hover:text-or transition-colors text-sm">
-                Ma bibliothèque
-              </a>
-            ) : (
-              !statut.loading && (
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+
+            {!statut.loading && (
+              connecte ? (
+                <a href="/compte" aria-label="Mon compte">
+                  <Avatar pseudo={statut.user?.pseudo} avatarUrl={statut.user?.avatar_url} />
+                </a>
+              ) : (
                 <a href="/login" className="hidden sm:block text-papier border border-papier/20 rounded-full px-4 py-1.5 hover:border-or hover:text-or transition-colors text-sm">
                   Se connecter
                 </a>
@@ -74,7 +93,7 @@ export default function SiteHeader() {
             <button
               onClick={() => setTiroirOuvert(true)}
               aria-label="Menu"
-              className="p-1.5 ml-2 text-papier/80 hover:text-or transition-colors"
+              className="p-1.5 text-papier/80 hover:text-or transition-colors"
             >
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />
@@ -97,9 +116,13 @@ export default function SiteHeader() {
           </div>
 
           {connecte && (
-            <div className="px-5 py-5 border-b border-ligne">
-              <p className="font-display text-lg text-papier truncate">{statut.user?.email}</p>
-            </div>
+            <a href="/compte" onClick={() => setTiroirOuvert(false)} className="flex items-center gap-3 px-5 py-5 border-b border-ligne hover:bg-encre/40 transition-colors">
+              <Avatar pseudo={statut.user?.pseudo} avatarUrl={statut.user?.avatar_url} taille={44} />
+              <div className="min-w-0">
+                <p className="font-display text-lg text-papier truncate">{statut.user?.pseudo || statut.user?.email}</p>
+                <p className="text-papier/40 text-xs font-mono uppercase tracking-wide">Voir le profil</p>
+              </div>
+            </a>
           )}
 
           <nav className="flex-1 overflow-y-auto py-3">
