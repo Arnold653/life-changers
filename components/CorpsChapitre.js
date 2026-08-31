@@ -112,8 +112,8 @@ export default function CorpsChapitre({ texte, tailleGrande = false }) {
 
   return (
     <div className={tailleGrande
-      ? 'text-papier/90 text-[1.35rem] leading-[2] space-y-6 text-left'
-      : 'text-papier/85 text-[1.05rem] leading-[1.85] space-y-5 text-justify'
+      ? 'text-papier/90 text-[1.35rem] leading-[2.05] space-y-8 text-left'
+      : 'text-papier/85 text-[1.05rem] leading-[1.95] space-y-7 text-justify'
     }>
       {paragraphes.map((p, i) => {
         if (p === '§SEPARATEUR§') {
