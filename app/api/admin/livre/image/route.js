@@ -24,9 +24,14 @@ export async function POST(request) {
   const bytes = Buffer.from(base64, 'base64')
   const chemin = `${body.slug}/images/${body.nom}.jpg`
 
-  const { error } = await admin.storage.from('livres').upload(chemin, bytes, { contentType: 'image/jpeg', upsert: true })
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  // Bucket 'illustrations' : PUBLIC, volontairement distinct du bucket privé 'livres' (celui du
+  // fichier source protégé). Une image isolée à l'intérieur du texte n'a pas de valeur de
+  // lecture par elle-même (contrairement au fichier entier) et doit rester accessible sans
+  // expiration pour que la lecture hors-ligne (page mise en cache) continue de l'afficher des
+  // mois plus tard — une URL signée expirerait bien avant.
+  const { error: erreurUpload } = await admin.storage.from('illustrations').upload(chemin, bytes, { contentType: 'image/jpeg', upsert: true })
+  if (erreurUpload) return NextResponse.json({ error: erreurUpload.message }, { status: 400 })
 
-  const { data: urlPublique } = admin.storage.from('livres').getPublicUrl(chemin)
+  const { data: urlPublique } = admin.storage.from('illustrations').getPublicUrl(chemin)
   return NextResponse.json({ url: urlPublique.publicUrl })
 }

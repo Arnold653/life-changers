@@ -444,6 +444,22 @@ export default function AdminLivresPage() {
           </button>
         ) : (
           <div className="border border-ligne rounded-lg p-4 bg-encreClair">
+            {apercu.contenu.couvertureDetectee && (
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-ligne">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={apercu.contenu.couvertureDetectee} alt="" className="w-14 h-20 object-cover rounded border border-ligne" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-papier text-sm">Couverture détectée automatiquement</p>
+                  <button
+                    type="button"
+                    onClick={() => setApercu((a) => ({ ...a, contenu: { ...a.contenu, couvertureDetectee: null } }))}
+                    className="text-papier/40 text-xs font-mono uppercase hover:text-grenat transition-colors"
+                  >
+                    Ignorer, je mettrai la mienne
+                  </button>
+                </div>
+              </div>
+            )}
             <p className="text-papier/70 text-sm mb-3">Aperçu des sections détectées :</p>
             <div className="flex flex-wrap gap-1.5 mb-4">
               {apercu.contenu.sections.map((s, i) => (

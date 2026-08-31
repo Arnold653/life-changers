@@ -76,17 +76,37 @@ export async function POST(request) {
     try { contenuExtrait = JSON.parse(contenuExtraitBrut) } catch { contenuExtrait = null }
   }
 
+  // Couverture détectée automatiquement (image pleine page en page 1 du PDF, voir
+  // lib/extractionPdf.js) : jamais stockée dans contenu_extrait (ce n'est pas du contenu de
+  // lecture) — uploadée ici, dans le bucket public 'couvertures', comme n'importe quelle
+  // couverture ajoutée à la main depuis l'admin.
+  let couvertureUrl = null
+  const couvertureDataUrl = contenuExtrait?.couvertureDetectee
+  if (contenuExtrait) delete contenuExtrait.couvertureDetectee
+  if (couvertureDataUrl) {
+    const base64Couverture = couvertureDataUrl.split(',')[1] || ''
+    const cheminCouverture = `livre/${slug}-${Date.now()}.jpg`
+    const { error: erreurCouverture } = await admin.storage
+      .from('couvertures')
+      .upload(cheminCouverture, Buffer.from(base64Couverture, 'base64'), { contentType: 'image/jpeg', upsert: true })
+    if (!erreurCouverture) {
+      const { data: urlPubliqueCouverture } = admin.storage.from('couvertures').getPublicUrl(cheminCouverture)
+      couvertureUrl = urlPubliqueCouverture.publicUrl
+    }
+  }
+
   const { error: erreurInsert } = await admin.from('livres').insert({
     titre, sous_titre: sousTitre || null, slug, auteur, description, genre,
     fichier_url: cheminFichier,
     fichier_type: fichierType,
     statut,
+    couverture_url: couvertureUrl,
     contenu_extrait: contenuExtrait,
     contenu_extrait_le: contenuExtrait ? new Date().toISOString() : null,
   })
   if (erreurInsert) return NextResponse.json({ error: erreurInsert.message }, { status: 400 })
 
-  return NextResponse.json({ ok: true, slug })
+  return NextResponse.json({ ok: true, slug, couvertureDetectee: !!couvertureUrl })
 }
 
 export async function PATCH(request) {

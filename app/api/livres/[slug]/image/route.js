@@ -32,9 +32,11 @@ export async function POST(request, { params }) {
   }
   const chemin = `${params.slug}/images/${body.nom}.jpg`
 
-  const { error } = await admin.storage.from('livres').upload(chemin, bytes, { contentType: 'image/jpeg', upsert: true })
+  // Bucket 'illustrations' : PUBLIC, volontairement distinct du bucket privé 'livres' — voir
+  // la même remarque dans /api/admin/livre/image.
+  const { error } = await admin.storage.from('illustrations').upload(chemin, bytes, { contentType: 'image/jpeg', upsert: true })
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 
-  const { data: urlPublique } = admin.storage.from('livres').getPublicUrl(chemin)
+  const { data: urlPublique } = admin.storage.from('illustrations').getPublicUrl(chemin)
   return NextResponse.json({ url: urlPublique.publicUrl })
 }

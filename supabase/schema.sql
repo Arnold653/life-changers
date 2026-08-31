@@ -141,6 +141,18 @@ on storage.objects for all
 using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
 with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- Bucket public pour les images DE CONTENU (illustrations extraites d'un PDF/EPUB/DOCX pendant
+-- la lecture) — distinct du bucket privé 'livres' (le fichier source protégé lui-même). Public
+-- à dessein : une illustration isolée n'a pas de valeur de lecture par elle-même, et la lecture
+-- hors-ligne (page mise en cache) a besoin d'une URL stable, jamais expirée.
+insert into storage.buckets (id, name, public)
+values ('illustrations', 'illustrations', true)
+on conflict (id) do nothing;
+
+create policy "Illustrations visibles par tous"
+on storage.objects for select
+using (bucket_id = 'illustrations');
+
 -- Aucune policy de lecture publique sur le bucket 'livres' : seule la clé service_role
 -- (routes API, qui vérifient l'achat avant d'appeler storage) peut y accéder.
 
