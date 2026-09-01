@@ -13,13 +13,53 @@ function Stat({ glyphe, valeur, suffixe = '' }) {
 }
 
 function CarteLivre({ livre, vedette = false }) {
+  if (vedette) {
+    return (
+      <a href={`/livres/${livre.slug}`} className="group flex flex-col sm:flex-row gap-6 sm:gap-8 items-start">
+        {/* Couverture à son ratio naturel (portrait), jamais recadrée — contrairement à un
+            bandeau large qui coupait le haut/bas d'une vraie couverture verticale. */}
+        <div className="relative w-40 sm:w-52 shrink-0 mx-auto sm:mx-0 aspect-[3/4.2] overflow-hidden rounded-md shadow-[6px_6px_0_0_rgb(var(--papier)/0.15)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgb(var(--papier)/0.15)]">
+          <CouvertureLivre titre={livre.titre} couvertureUrl={livre.couverture_url} />
+          <div className="absolute inset-0 p-2.5 flex items-start gap-1.5 flex-wrap">
+            {livre.genre && (
+              <span className="font-mono text-[0.6rem] uppercase tracking-widest text-white border border-white/30 rounded-full px-2 py-0.5 bg-black/20 backdrop-blur-sm">
+                {livre.genre}
+              </span>
+            )}
+            {livre.nouveau && (
+              <span className="font-mono text-[0.6rem] uppercase tracking-widest text-encre bg-or rounded-full px-2 py-0.5">
+                Nouveau
+              </span>
+            )}
+          </div>
+          {livre.sectionEnCours && livre.nbSections > 0 && (
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-black/30">
+              <div className="h-full bg-or" style={{ width: `${Math.min(100, (livre.sectionEnCours / livre.nbSections) * 100)}%` }} />
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0 text-center sm:text-left">
+          <div className="w-6 h-[1.5px] bg-or mb-3 mx-auto sm:mx-0" />
+          <h2 className="font-display font-bold text-papier leading-tight text-2xl md:text-4xl mb-1.5">
+            {livre.titre}
+          </h2>
+          {livre.auteur && <p className="text-papier/45 text-xs font-mono mb-3">{livre.auteur}</p>}
+          <p className="text-papier/45 leading-relaxed text-base max-w-2xl mb-3">{livre.description}</p>
+          <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
+            <span className="text-or text-sm font-mono uppercase tracking-wide">
+              {livre.sectionEnCours ? 'Reprendre →' : 'Découvrir →'}
+            </span>
+            <Stat glyphe="👥" valeur={livre.nbLecteurs} suffixe=" lecteur" />
+          </div>
+        </div>
+      </a>
+    )
+  }
+
   return (
     <a href={`/livres/${livre.slug}`} className="group block">
-      <div
-        className={`relative overflow-hidden rounded-md mb-4 shadow-[6px_6px_0_0_rgb(var(--papier)/0.15)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgb(var(--papier)/0.15)] ${
-          vedette ? 'aspect-[16/8.5] sm:aspect-[16/7]' : 'aspect-[3/4.2]'
-        }`}
-      >
+      <div className="relative overflow-hidden rounded-md mb-4 shadow-[6px_6px_0_0_rgb(var(--papier)/0.15)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgb(var(--papier)/0.15)] aspect-[3/4.2]">
         {/* La couverture (réelle ou placeholder) reste toujours sombre par construction (voir
             Couvertures.js) — le texte posé dessus est donc toujours blanc fixe, jamais lié au
             thème clair/sombre du site : il resterait invisible sur une couverture sombre sinon. */}
@@ -38,16 +78,6 @@ function CarteLivre({ livre, vedette = false }) {
           )}
         </div>
 
-        {vedette && (
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <div className="w-6 h-[1.5px] bg-or mb-3" />
-            <h2 className="font-display font-bold text-white leading-tight text-2xl md:text-4xl max-w-lg drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
-              {livre.titre}
-            </h2>
-            {livre.auteur && <p className="text-white/75 text-xs mt-1.5 font-mono">{livre.auteur}</p>}
-          </div>
-        )}
-
         {livre.sectionEnCours && livre.nbSections > 0 && (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-black/30">
             <div className="h-full bg-or" style={{ width: `${Math.min(100, (livre.sectionEnCours / livre.nbSections) * 100)}%` }} />
@@ -57,14 +87,10 @@ function CarteLivre({ livre, vedette = false }) {
 
       {/* Titre/auteur hors de la carte : lisibilité garantie quels que soient le thème et la
           couverture (réelle photo, n'importe quelle couleur), pas de superposition risquée. */}
-      {!vedette && (
-        <>
-          <h2 className="font-display font-semibold text-papier leading-snug text-lg mb-0.5">{livre.titre}</h2>
-          {livre.auteur && <p className="text-papier/45 text-xs font-mono mb-2">{livre.auteur}</p>}
-        </>
-      )}
+      <h2 className="font-display font-semibold text-papier leading-snug text-lg mb-0.5">{livre.titre}</h2>
+      {livre.auteur && <p className="text-papier/45 text-xs font-mono mb-2">{livre.auteur}</p>}
 
-      <p className={`text-papier/45 leading-relaxed ${vedette ? 'text-base max-w-2xl mb-2' : 'text-sm line-clamp-2 mb-2'}`}>{livre.description}</p>
+      <p className="text-papier/45 leading-relaxed text-sm line-clamp-2 mb-2">{livre.description}</p>
 
       <div className="flex items-center gap-3 flex-wrap">
         {livre.sectionEnCours ? (
@@ -78,7 +104,7 @@ function CarteLivre({ livre, vedette = false }) {
   )
 }
 
-export default function CatalogueLivres({ livres, pseudo }) {
+export default function CatalogueLivres({ livres, pseudo, connecte = true }) {
   const [recherche, setRecherche] = useState('')
   const [genreActif, setGenreActif] = useState(null)
   const [tri, setTri] = useState('recents') // 'recents' | 'lus' | 'encours'
@@ -112,21 +138,25 @@ export default function CatalogueLivres({ livres, pseudo }) {
   const reste = vedetteValide ? filtres.filter((l) => l.id !== vedetteValide.id) : filtres
 
   return (
-    <div className="px-6 pt-16 pb-24 max-w-6xl mx-auto">
-      <div className="lever max-w-2xl mb-12">
-        {salutation && (
-          <p className="text-papier/50 font-mono text-sm mb-4">{salutation}</p>
-        )}
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
-          <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
-        </p>
-        <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-papier mb-5 leading-[1.05] tracking-tight">
-          Des livres qui changent des vies.
-        </h1>
-        <p className="text-papier/60 leading-relaxed text-lg">
-          Des ouvrages complets, écrits sans détour, à lire en ligne ou hors connexion.
-        </p>
-      </div>
+    <div id="catalogue" className="px-6 pt-16 pb-24 max-w-6xl mx-auto scroll-mt-16">
+      {connecte ? (
+        <div className="lever max-w-2xl mb-12">
+          {salutation && (
+            <p className="text-papier/50 font-mono text-sm mb-4">{salutation}</p>
+          )}
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
+            <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
+          </p>
+          <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-papier mb-5 leading-[1.05] tracking-tight">
+            Des livres qui changent des vies.
+          </h1>
+          <p className="text-papier/60 leading-relaxed text-lg">
+            Des ouvrages complets, écrits sans détour, à lire en ligne ou hors connexion.
+          </p>
+        </div>
+      ) : (
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-8 pt-4">Le catalogue</p>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-6">
         <input

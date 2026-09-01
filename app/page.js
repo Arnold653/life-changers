@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import CatalogueLivres from '@/components/CatalogueLivres'
+import LandingHero from '@/components/LandingHero'
 
 export default async function LivresPage() {
   const supabase = createClient()
@@ -52,5 +53,10 @@ export default async function LivresPage() {
     }
   })
 
-  return <CatalogueLivres livres={enrichis} pseudo={profil?.pseudo || null} />
+  return (
+    <>
+      {!user && <LandingHero />}
+      <CatalogueLivres livres={enrichis} pseudo={profil?.pseudo || null} connecte={!!user} />
+    </>
+  )
 }
