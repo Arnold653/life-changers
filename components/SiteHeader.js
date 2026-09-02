@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ThemeToggle from '@/components/ThemeToggle'
 
@@ -24,6 +25,7 @@ function Avatar({ pseudo, avatarUrl, taille = 34 }) {
 export default function SiteHeader() {
   const [tiroirOuvert, setTiroirOuvert] = useState(false)
   const [statut, setStatut] = useState({ loading: true, user: null, isAdmin: false })
+  const pathname = usePathname()
 
   const supabase = createClient()
 
@@ -51,6 +53,10 @@ export default function SiteHeader() {
   }
 
   const connecte = !statut.loading && !!statut.user
+  // Sur la landing page (non connecté), le header flotte au-dessus d'une bannière sombre en
+  // plein cadre : un fond clair par défaut (thème clair) casserait tout l'effet immersif. Fond
+  // sombre fixe, indépendant du thème choisi — seulement sur cette page précise.
+  const modeImmersif = pathname === '/' && !connecte
 
   // Un seul type de contenu sur Life Changers (les livres) : "Accueil" fait à la fois office
   // de page d'accueil et de catalogue complet, pas besoin d'une entrée séparée pour ça.
@@ -62,21 +68,21 @@ export default function SiteHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-encre/85 border-b border-ligne">
+      <header className={`sticky top-0 z-40 backdrop-blur-xl ${modeImmersif ? 'bg-[#050810]/70 border-b border-white/10' : 'bg-encre/85 border-b border-ligne'}`}>
         <div className="max-w-6xl mx-auto px-5 sm:px-6 h-16 flex items-center justify-between">
           <a href="/" className="flex items-center shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/logo.png" alt="Life Changers" className="h-6 sm:h-7 w-auto" />
           </a>
 
-          <nav className="hidden md:flex items-center gap-7 text-[0.8rem] text-papier/55 font-mono uppercase tracking-wide">
+          <nav className={`hidden md:flex items-center gap-7 text-[0.8rem] font-mono uppercase tracking-wide ${modeImmersif ? 'text-white/70' : 'text-papier/55'}`}>
             {liensNav.map((l) => (
               <a key={l.href} href={l.href} className="hover:text-or transition-colors">{l.label}</a>
             ))}
           </nav>
 
           <div className="flex items-center gap-2.5">
-            <ThemeToggle />
+            <ThemeToggle className={modeImmersif ? '!text-white/80' : ''} />
 
             {!statut.loading && (
               connecte ? (
@@ -84,7 +90,14 @@ export default function SiteHeader() {
                   <Avatar pseudo={statut.user?.pseudo} avatarUrl={statut.user?.avatar_url} />
                 </a>
               ) : (
-                <a href="/login" className="hidden sm:block text-papier border border-papier/20 rounded-full px-4 py-1.5 hover:border-or hover:text-or transition-colors text-sm">
+                <a
+                  href="/login"
+                  className={`hidden sm:block rounded-full px-4 py-1.5 transition-colors text-sm ${
+                    modeImmersif
+                      ? 'text-white border border-white/25 hover:border-or hover:text-or'
+                      : 'text-papier border border-papier/20 hover:border-or hover:text-or'
+                  }`}
+                >
                   Se connecter
                 </a>
               )
@@ -93,7 +106,7 @@ export default function SiteHeader() {
             <button
               onClick={() => setTiroirOuvert(true)}
               aria-label="Menu"
-              className="p-1.5 text-papier/80 hover:text-or transition-colors"
+              className={`p-1.5 hover:text-or transition-colors ${modeImmersif ? 'text-white/90' : 'text-papier/80'}`}
             >
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
                 <path d="M4 7h16M4 12h16M4 17h16" strokeLinecap="round" />

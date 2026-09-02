@@ -138,25 +138,55 @@ export default function CatalogueLivres({ livres, pseudo, connecte = true }) {
   const reste = vedetteValide ? filtres.filter((l) => l.id !== vedetteValide.id) : filtres
 
   return (
-    <div id="catalogue" className="px-6 pt-16 pb-24 max-w-6xl mx-auto scroll-mt-16">
-      {connecte ? (
-        <div className="lever max-w-2xl mb-12">
-          {salutation && (
-            <p className="text-papier/50 font-mono text-sm mb-4">{salutation}</p>
-          )}
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
-            <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
-          </p>
-          <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-papier mb-5 leading-[1.05] tracking-tight">
-            Des livres qui changent des vies.
-          </h1>
-          <p className="text-papier/60 leading-relaxed text-lg">
-            Des ouvrages complets, écrits sans détour, à lire en ligne ou hors connexion.
-          </p>
-        </div>
-      ) : (
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-8 pt-4">Le catalogue</p>
+    <>
+      {connecte && vedetteValide?.couverture_url && (
+        <section className="relative overflow-hidden bg-[#050810] min-h-[70vh] sm:min-h-[78vh] flex items-end -mb-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={vedetteValide.couverture_url} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(5,8,16,0.1) 0%, rgba(5,8,16,0.55) 55%, #050810 96%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #050810 0%, rgba(5,8,16,0.5) 32%, transparent 62%)' }} />
+
+          <div className="relative w-full max-w-6xl mx-auto px-6 sm:px-10 pb-14 sm:pb-20 pt-28">
+            {salutation && <p className="text-white/55 font-mono text-sm mb-4">{salutation}</p>}
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
+              <span className="w-5 h-[3px] bg-or inline-block" /> {enCours ? 'Reprendre la lecture' : 'Le plus lu'}
+            </p>
+            <h1 className="font-display font-bold text-3xl sm:text-5xl text-white mb-5 leading-[1.05] tracking-tight max-w-2xl drop-shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+              {vedetteValide.titre}
+            </h1>
+            {vedetteValide.description && (
+              <p className="text-white/65 leading-relaxed text-base max-w-lg mb-8 line-clamp-3">{vedetteValide.description}</p>
+            )}
+            <a
+              href={`/livres/${vedetteValide.slug}`}
+              className="inline-block text-encre bg-or rounded-full px-8 py-3.5 font-semibold hover:brightness-110 transition-all"
+            >
+              {enCours ? 'Reprendre →' : 'Découvrir →'}
+            </a>
+          </div>
+        </section>
       )}
+
+      <div id="catalogue" className="px-6 pt-16 pb-24 max-w-6xl mx-auto scroll-mt-16">
+        {!connecte && (
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-8 pt-4">Le catalogue</p>
+        )}
+        {connecte && !vedetteValide?.couverture_url && (
+          <div className="lever max-w-2xl mb-12">
+            {salutation && (
+              <p className="text-papier/50 font-mono text-sm mb-4">{salutation}</p>
+            )}
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-or mb-4 flex items-center gap-2">
+              <span className="w-5 h-[3px] bg-or inline-block" /> Life Changers
+            </p>
+            <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl text-papier mb-5 leading-[1.05] tracking-tight">
+              Des livres qui changent des vies.
+            </h1>
+            <p className="text-papier/60 leading-relaxed text-lg">
+              Des ouvrages complets, écrits sans détour, à lire en ligne ou hors connexion.
+            </p>
+          </div>
+        )}
 
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between mb-6">
         <input
@@ -205,15 +235,6 @@ export default function CatalogueLivres({ livres, pseudo, connecte = true }) {
         </div>
       )}
 
-      {vedetteValide && (
-        <div className="mb-14">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-papier/40 mb-4">
-            {enCours ? 'Reprendre la lecture' : 'Le plus lu'}
-          </p>
-          <CarteLivre livre={vedetteValide} vedette />
-        </div>
-      )}
-
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {reste.map((livre) => (
           <CarteLivre key={livre.id} livre={livre} />
@@ -225,6 +246,7 @@ export default function CatalogueLivres({ livres, pseudo, connecte = true }) {
           {tri === 'encours' ? "Rien en cours pour l'instant — choisis un livre pour commencer." : 'Aucun livre ne correspond.'}
         </p>
       )}
-    </div>
+      </div>
+    </>
   )
 }

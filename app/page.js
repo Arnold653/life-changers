@@ -55,7 +55,9 @@ export default async function LivresPage() {
 
   return (
     <>
-      {!user && <LandingHero />}
+      {!user && (
+        <LandingHero livre={[...enrichis].sort((a, b) => b.nbLecteurs - a.nbLecteurs)[0] || enrichis[0]} />
+      )}
       <CatalogueLivres livres={enrichis} pseudo={profil?.pseudo || null} connecte={!!user} />
     </>
   )
