@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { CouvertureAdmin } from '@/components/admin/CouvertureAdmin'
 import PartageSocial from '@/components/admin/PartageSocial'
 import { extrairePdfDepuisUrl } from '@/lib/extractionPdf'
@@ -19,6 +20,29 @@ function detecterType(nomFichier) {
   if (ext === 'epub') return 'epub'
   if (ext === 'docx') return 'docx'
   return 'pdf'
+}
+
+const EXTENSIONS_FICHIER = { pdf: 'pdf', md: 'md', txt: 'txt', epub: 'epub', docx: 'docx' }
+
+// Televerse le fichier source (PDF/EPUB/DOCX/MD/TXT) directement vers Supabase Storage depuis
+// le navigateur, via une URL signée générée côté serveur — évite de faire transiter le fichier
+// par la fonction API Vercel, dont le corps de requête est limité à environ 4,5 Mo (cause de
+// l'erreur "Unexpected token 'R', Request En..." sur les fichiers volumineux).
+async function televerserFichierLivre(slug, fichierType, fichier) {
+  const extension = EXTENSIONS_FICHIER[fichierType] || 'pdf'
+  const resUrl = await fetch('/api/admin/livre/upload-url', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug, extension }),
+  })
+  const donneesUrl = await resUrl.json()
+  if (!resUrl.ok) throw new Error(donneesUrl.error || 'Échec de préparation du televersement')
+
+  const supabase = createClient()
+  const { error } = await supabase.storage.from('livres').uploadToSignedUrl(donneesUrl.chemin, donneesUrl.token, fichier)
+  if (error) throw new Error(error.message)
+
+  return donneesUrl.chemin
 }
 
 async function televerserImageAdmin(slug, nom, dataUrl) {
@@ -209,9 +233,18 @@ export default function AdminLivresPage() {
     setLoading(true)
     setMessage('')
 
+    let cheminFichier
+    try {
+      cheminFichier = await televerserFichierLivre(form.slug, apercu.type, fichier)
+    } catch (e) {
+      setLoading(false)
+      setMessage(`Erreur de televersement : ${e?.message || e}`)
+      return
+    }
+
     const data = new FormData()
     Object.entries(form).forEach(([k, v]) => data.append(k, v))
-    data.append('fichier', fichier)
+    data.append('chemin_fichier', cheminFichier)
     data.append('fichier_type', apercu.type)
     data.append('contenu_extrait', JSON.stringify(apercu.contenu))
     data.append('statut', statutFinal)
@@ -273,6 +306,8 @@ export default function AdminLivresPage() {
         const titre = (entete?.titre) || detecterTitreLivre(fichier.name, contenu)
         const slug = slugProvisoire
 
+        const cheminFichier = await televerserFichierLivre(slug, type, fichier)
+
         const data = new FormData()
         data.append('titre', titre)
         data.append('slug', slug)
@@ -280,7 +315,7 @@ export default function AdminLivresPage() {
         data.append('description', entete?.description || '')
         data.append('sous_titre', contenu.sousTitreDetecte || entete?.sousTitre || '')
         data.append('genre', entete?.genre || genreLot)
-        data.append('fichier', fichier)
+        data.append('chemin_fichier', cheminFichier)
         data.append('fichier_type', type)
         data.append('contenu_extrait', JSON.stringify(contenu))
         data.append('statut', 'brouillon')

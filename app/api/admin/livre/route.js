@@ -42,11 +42,15 @@ export async function POST(request) {
   const description = form.get('description')
   const genre = form.get('genre')
   const fichier = form.get('fichier')
+  // Fichier déjà téléversé côté client via URL signée (voir /api/admin/livre/upload-url) —
+  // chemin privilégié pour contourner la limite d'environ 4,5 Mo sur le corps des requêtes
+  // des fonctions Vercel. 'fichier' (octets bruts dans le FormData) reste supporté en repli.
+  const cheminFichierExistant = form.get('chemin_fichier')
   const fichierType = form.get('fichier_type') || 'pdf' // 'pdf' | 'md' | 'txt' | 'epub' | 'docx'
   const contenuExtraitBrut = form.get('contenu_extrait') // JSON déjà calculé côté admin
   const statut = form.get('statut') === 'publie' ? 'publie' : 'brouillon'
 
-  if (!titre || !slug || !fichier) {
+  if (!titre || !slug || (!fichier && !cheminFichierExistant)) {
     return NextResponse.json({ error: 'Titre, slug et fichier requis' }, { status: 400 })
   }
 
@@ -60,16 +64,20 @@ export async function POST(request) {
   }
   const extension = extensions[fichierType] || 'pdf'
 
-  const cheminFichier = `${slug}-${Date.now()}.${extension}`
-  const bytes = new Uint8Array(await fichier.arrayBuffer())
-
   // Bucket 'livres' privé : on stocke le CHEMIN de l'objet (pas d'URL publique). Chaque lecture
   // ou téléchargement génère une URL signée à la volée (voir lib/fichiersLivres.js), après
   // vérification serveur de l'achat — impossible de contourner le paywall en devinant une URL.
-  const { error: erreurUpload } = await admin.storage.from('livres').upload(cheminFichier, bytes, {
-    contentType: typesContenu[fichierType] || 'application/pdf',
-  })
-  if (erreurUpload) return NextResponse.json({ error: erreurUpload.message }, { status: 400 })
+  let cheminFichier
+  if (cheminFichierExistant) {
+    cheminFichier = cheminFichierExistant
+  } else {
+    cheminFichier = `${slug}-${Date.now()}.${extension}`
+    const bytes = new Uint8Array(await fichier.arrayBuffer())
+    const { error: erreurUpload } = await admin.storage.from('livres').upload(cheminFichier, bytes, {
+      contentType: typesContenu[fichierType] || 'application/pdf',
+    })
+    if (erreurUpload) return NextResponse.json({ error: erreurUpload.message }, { status: 400 })
+  }
 
   let contenuExtrait = null
   if (contenuExtraitBrut) {

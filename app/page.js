@@ -14,7 +14,7 @@ export default async function LivresPage() {
 
   const { data: livres } = await supabase
     .from('livres')
-    .select('id, titre, slug, auteur, genre, description, created_at, contenu_extrait, couverture_url')
+    .select('id, titre, slug, auteur, genre, description, created_at, contenu_extrait, couverture_url, mode_monetisation, prix_fcfa')
     .eq('statut', 'publie')
     .order('created_at', { ascending: false })
 
@@ -45,6 +45,8 @@ export default async function LivresPage() {
     return {
       id: l.id, titre: l.titre, slug: l.slug, auteur: l.auteur, genre: l.genre, description: l.description,
       couverture_url: l.couverture_url,
+      mode_monetisation: l.mode_monetisation || 'gratuit',
+      prix_fcfa: l.prix_fcfa || 0,
       nbSections,
       nbLecteurs: lecteursParLivre[l.id]?.size || 0,
       nouveau: new Date(l.created_at).getTime() > septJours,

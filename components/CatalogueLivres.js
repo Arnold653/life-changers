@@ -3,6 +3,22 @@
 import { useMemo, useState } from 'react'
 import { CouvertureLivre } from '@/components/Couvertures'
 
+// Le livre lui-même n'est verrouillé (accès payant) qu'en mode 'payant' — en 'pourboire' et
+// 'bonus', la lecture reste entièrement gratuite (seul un pourboire ou un bonus annexe est
+// payant), donc le badge catalogue doit rester "Gratuit" dans ces deux cas.
+function BadgePaiement({ livre }) {
+  const estPayant = livre.mode_monetisation === 'payant'
+  return (
+    <span
+      className={`font-mono text-[0.6rem] uppercase tracking-widest rounded-full px-2 py-0.5 backdrop-blur-sm ${
+        estPayant ? 'text-encre bg-or' : 'text-white border border-white/30 bg-black/20'
+      }`}
+    >
+      {estPayant ? `Payant${livre.prix_fcfa ? ` · ${livre.prix_fcfa} FCFA` : ''}` : 'Gratuit'}
+    </span>
+  )
+}
+
 function Stat({ glyphe, valeur, suffixe = '' }) {
   if (!valeur) return null
   return (
@@ -21,6 +37,7 @@ function CarteLivre({ livre, vedette = false }) {
         <div className="relative w-40 sm:w-52 shrink-0 mx-auto sm:mx-0 aspect-[3/4.2] overflow-hidden rounded-md shadow-[6px_6px_0_0_rgb(var(--papier)/0.15)] transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:shadow-[10px_10px_0_0_rgb(var(--papier)/0.15)]">
           <CouvertureLivre titre={livre.titre} couvertureUrl={livre.couverture_url} />
           <div className="absolute inset-0 p-2.5 flex items-start gap-1.5 flex-wrap">
+            <BadgePaiement livre={livre} />
             {livre.genre && (
               <span className="font-mono text-[0.6rem] uppercase tracking-widest text-white border border-white/30 rounded-full px-2 py-0.5 bg-black/20 backdrop-blur-sm">
                 {livre.genre}
@@ -65,7 +82,8 @@ function CarteLivre({ livre, vedette = false }) {
             thème clair/sombre du site : il resterait invisible sur une couverture sombre sinon. */}
         <CouvertureLivre titre={livre.titre} couvertureUrl={livre.couverture_url} />
 
-        <div className="absolute inset-0 p-4 flex items-start gap-2">
+        <div className="absolute inset-0 p-4 flex items-start gap-2 flex-wrap">
+          <BadgePaiement livre={livre} />
           {livre.genre && (
             <span className="font-mono text-[0.65rem] uppercase tracking-widest text-white border border-white/30 rounded-full px-2.5 py-1 bg-black/20 backdrop-blur-sm">
               {livre.genre}
