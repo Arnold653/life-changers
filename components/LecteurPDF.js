@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { extrairePdfDepuisUrl } from '@/lib/extractionPdf'
-import CorpsChapitre from './CorpsChapitre'
+import CorpsChapitre, { InlineMarkdown } from './CorpsChapitre'
 import LectureAudio from './LectureAudio'
 
 async function televerserImage(slug, nom, dataUrl) {
@@ -135,6 +135,13 @@ export default function LecteurPDF({ url, slug, livreId, contenuInitial, section
     .map((p) => p.texte)
     .join('\n\n')
 
+  // Page de séparation "Partie" : dans le document source, ces pages ne portent que le titre
+  // (rupture de page volontaire de l'auteur), sans paragraphe de corps — contrairement à un
+  // chapitre normal. On les garde telles quelles (ne pas inventer de texte), mais on les met
+  // en valeur avec un traitement immersif plutôt que de laisser un titre seul et perdu en haut
+  // d'une page par ailleurs vide.
+  const estPageDePartie = section.blocs.length === 1 && section.blocs[0]?.type === 'texte' && section.blocs[0]?.titre && (section.blocs[0]?.niveau || 2) === 1
+
   return (
     <div ref={hautLecteurRef}>
       {tableMatieres.length > 1 && (
@@ -190,11 +197,24 @@ export default function LecteurPDF({ url, slug, livreId, contenuInitial, section
         </div>
       )}
 
-      <div className="mb-8">
-        <LectureAudio texte={texteAudio} titre={titreAudio} />
-      </div>
+      {estPageDePartie ? (
+        <div className="min-h-[46vh] flex flex-col items-center justify-center text-center py-16">
+          <span className="font-mono text-xs uppercase tracking-[0.35em] text-or/80 mb-6">Partie</span>
+          <div className="w-10 h-[2px] bg-or mb-7" />
+          <h2 className="font-display font-bold text-papier text-3xl sm:text-5xl leading-[1.15] max-w-2xl tracking-wide">
+            <InlineMarkdown texte={section.blocs[0].texte} />
+          </h2>
+          <div className="w-10 h-[2px] bg-or mt-7" />
+        </div>
+      ) : (
+        <>
+          <div className="mb-8">
+            <LectureAudio texte={texteAudio} titre={titreAudio} />
+          </div>
 
-      <CorpsChapitre texte={texteSection} />
+          <CorpsChapitre texte={texteSection} />
+        </>
+      )}
 
       {sections.length > 1 && (
         <div className="flex items-center justify-between mt-16 pt-8 border-t border-ligne font-mono text-sm">
